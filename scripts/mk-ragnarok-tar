@@ -1,0 +1,14 @@
+#!/bin/bash
+RAGNAROOT="$(dirname $(dirname $(realpath $0)))"
+set -e
+
+source "$RAGNAROOT/scripts/functions.sh"
+source "$RAGNAROOT/config"
+
+mkdir -p "$RAGNAROOT/tmp"
+cd "$RAGNAROOT/tmp"
+
+down_upd https://github.com/R-ARM/buildroot2.git master "$RAGNAROOT/tmp/buildroot"
+
+make -C "$RAGNAROOT/tmp/buildroot" ragnarok_defconfig
+make -C "$RAGNAROOT/tmp/buildroot"
