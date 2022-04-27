@@ -1,0 +1,16 @@
+#!/bin/bash
+RAGNAROOT="$(dirname $(dirname $(realpath $0)))"
+set -e
+
+source "$RAGNAROOT/scripts/functions.sh"
+source "$RAGNAROOT/config"
+
+mkdir -p "$RAGNAROOT/tmp"
+cd "$RAGNAROOT/tmp"
+
+down_upd https://github.com/R-ARM/kernel.git master "$RAGNAROOT/tmp/kernel"
+
+cd $RAGNAROOT/tmp/kernel
+
+env ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- make -j"$THREADS" ragnarok_defconfig
+env ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- make -j"$THREADS"

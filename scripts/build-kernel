@@ -1,0 +1,14 @@
+#!/bin/bash
+RAGNAROOT=$(dirname $(dirname $(realpath $0)))
+set -e
+
+source "$RAGNAROOT/scripts/functions"
+
+mkdir -p "$RAGNAROOT/tmp"
+cd "$RAGNAROOT/tmp"
+
+down_upd https://github.com/R-ARM/kernel.git stable
+cd "$RAGNAROOT/tmp/kernel"
+
+make ragnarok_defconfig
+make -j"$(nproc)"

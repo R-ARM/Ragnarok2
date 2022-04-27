@@ -1,0 +1,83 @@
+#!/bin/bash
+set -e
+
+RAGNAROOT="$(dirname $(realpath $0))"
+source "$RAGNAROOT/config"
+
+SD="$1"
+
+if [ -z "$1" ]; then
+	echo "First parameter of $0 has to be the device to build onto"
+	exit 1
+fi
+
+if [ ! -e "$SD" ]; then
+	echo "$SD doesn't exist"
+	exit 1
+fi
+
+if [ ! -b "$SD" ]; then
+	echo "Can't build onto not-block device"
+	exit 1
+fi
+
+# compile everything ahead of time
+"$RAGNAROOT/scripts/mk-u-boot" "$SD"
+"$RAGNAROOT/scripts/mk-kernel"
+[ "$DIST" = "ragnarok" ] && "$RAGNAROOT/scripts/mk-ragnarok-tar"
+
+# partition table
+parted "$SD" -s mklabel gpt
+if [ "$DIST" = "ragnarok" ]; then
+	parted "$SD" -s mkpart RROOT ext4 16MiB 1024MiB
+else
+	parted "$SD" -s mkpart RROOT ext4 16MiB "100%"
+fi
+partprobe "$SD"
+
+# flash u-boot at correct offset
+dd if="$RAGNAROOT/tmp/u-boot/u-boot-rockchip.bin" of="$SD" bs=512 seek=64
+
+# populate /
+
+# if sd card's first part is on ex. /dev/mmcblk0p1 add p to partitions
+# if it's on ex. /dev/sdb1 don't do it
+[ -b "${SD}p1" ] && P="p"
+
+ROOTPART="${SD}${P}1"
+ROOTPATH="$RAGNAROOT/tmp/root"
+mkdir -p "$ROOTPATH"
+
+mkfs.ext4 "$ROOTPART"
+mount "$ROOTPART" "$ROOTPATH"
+
+# set up cleanup function in case it fails
+function cleanup() {
+	echo "Uh-oh!"
+	umount "$ROOTPATH"
+	exit 1
+}
+trap cleanup EXIT
+
+case "$DIST" in
+	ragnarok)
+		# TODO
+		;;
+	debian)
+		debootstrap --arch="arm64" "sid" "$ROOTPATH" "https://deb.debian.org/debian"
+
+		chroot "$ROOTPATH" apt update
+		chroot "$ROOTPATH" apt install -y vim network-manager build-essential git kmscube weston ssh htop alsa-utils evtest
+
+		chroot "$ROOTPATH" passwd -d root
+		;;
+esac
+
+# and install kernel
+cp "$RAGNAROOT/tmp/kernel/arch/arm64/boot/Image" "$ROOTPATH/boot/"
+cp "$RAGNAROOT/tmp/kernel/arch/arm64/boot/dts/rockchip/$SOC*dtb" "$ROOTPATH/boot/"
+
+umount "$ROOTPATH"
+sync
+
+echo "Done!"

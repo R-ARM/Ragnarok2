@@ -1,0 +1,25 @@
+#!/bin/bash
+RAGNAROOT="$(dirname $(dirname $(realpath $0)))"
+set -e
+
+source "$RAGNAROOT/scripts/functions.sh"
+source "$RAGNAROOT/config"
+
+mkdir -p "$RAGNAROOT/tmp"
+cd "$RAGNAROOT/tmp"
+
+down_upd https://github.com/R-ARM/u-boot.git master "$RAGNAROOT/tmp/u-boot"
+down_upd https://github.com/ARM-software/arm-trusted-firmware.git master "$RAGNAROOT/tmp/arm-tf"
+
+if [ "$SOC" = "rk3326" ]; then
+	make bl31 CROSS_COMPILE=aarch64-linux-gnu- PLAT=px30 DEBUG=0 -C "$RAGNAROOT/tmp/arm-tf" -j"$THREADS"
+	BL31="$RAGNAROOT/tmp/arm-tf/build/px30/release/bl31/bl31.elf"
+else
+	make bl31 CROSS_COMPILE=aarch64-linux-gnu- PLAT="$SOC" DEBUG=0 -C "$RAGNAROOT/tmp/arm-tf" -j"$THREADS"
+	BL31="$RAGNAROOT/tmp/arm-tf/build/$SOC/release/bl31/bl31.elf"
+fi
+
+cd $RAGNAROOT/tmp/u-boot
+
+env ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- BL31="$BL31" make -j"$THREADS" ragnarok_"$SOC"_defconfig
+env ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- BL31="$BL31" make -j"$THREADS"

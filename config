@@ -1,0 +1,10 @@
+#!/bin/false
+
+# debian / ragnarok
+DIST=debian
+
+# num of threads for compilation
+THREADS=16
+
+# soc of target device
+SOC=rk3399
