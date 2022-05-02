@@ -36,7 +36,12 @@ fi
 partprobe "$SD"
 
 # flash u-boot at correct offset
-dd if="$RAGNAROOT/tmp/u-boot/u-boot-rockchip.bin" of="$SD" bs=512 seek=64
+if [ "$SOC" = "rk3326" ]; then
+	dd if="$RAGNAROOT/tmp/u-boot/idbloader.img" of="$SD" bs=512 seek=64
+	dd if="$RAGNAROOT/tmp/u-boot/u-boot.itb" of="$SD" bs=512 seek=512
+else
+	dd if="$RAGNAROOT/tmp/u-boot/u-boot-rockchip.bin" of="$SD" bs=512 seek=64
+fi
 
 # populate /
 
