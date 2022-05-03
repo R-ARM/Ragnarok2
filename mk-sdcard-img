@@ -80,7 +80,7 @@ esac
 
 # and install kernel
 cp "$RAGNAROOT/tmp/kernel/arch/arm64/boot/Image" "$ROOTPATH/boot/"
-cp "$RAGNAROOT/tmp/kernel/arch/arm64/boot/dts/rockchip/$SOC*dtb" "$ROOTPATH/boot/"
+cp "$RAGNAROOT"/tmp/kernel/arch/arm64/boot/dts/rockchip/$SOC*dtb "$ROOTPATH/boot/"
 
 umount "$ROOTPATH"
 sync
