@@ -66,7 +66,7 @@ trap cleanup EXIT
 
 case "$DIST" in
 	ragnarok)
-		# TODO
+		bsdtar xf "$RAGNAROOT/tmp/buildroot/output/images/rootfs.tar" -C "$ROOTPATH"
 		;;
 	debian)
 		debootstrap --arch="arm64" "sid" "$ROOTPATH" "https://deb.debian.org/debian"
@@ -79,6 +79,7 @@ case "$DIST" in
 esac
 
 # and install kernel
+mkdir -p "$ROOTPATH/boot"
 cp "$RAGNAROOT/tmp/kernel/arch/arm64/boot/Image" "$ROOTPATH/boot/"
 cp "$RAGNAROOT"/tmp/kernel/arch/arm64/boot/dts/rockchip/$SOC*dtb "$ROOTPATH/boot/"
 
